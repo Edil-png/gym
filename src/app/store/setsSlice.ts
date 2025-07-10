@@ -35,9 +35,6 @@ const setsSlice = createSlice({
       state.sets = state.sets.filter((set) => set.id !== action.payload);
       localStorage.setItem("sets", JSON.stringify(state.sets));
     },
-    readWeek: (state, action: PayloadAction<Set>) => {
-      state.sets = action.payload.week
-    },
   },
 });
 
