@@ -5,21 +5,32 @@ import AddSetModal from "../components/AddSetModal";
 import SetCard from "../components/SetCard";
 
 export default function HomePage() {
+  const [isInitialized, setIsInitialized] = useState(false);
   const [sets, setSets] = useState<any[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
 
-  // ✅ Загрузка из localStorage при старте
   useEffect(() => {
     const stored = localStorage.getItem("sets");
     if (stored) {
       setSets(JSON.parse(stored));
     }
+    setIsInitialized(true);
   }, []);
+
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem("sets", JSON.stringify(sets));
+    }
+  }, [sets, isInitialized]);
 
  
 
   const handleRemove = (index: number) => {
     setSets((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAdd = (newSet: any) => {
+    setSets((prev) => [...prev, newSet]);
   };
 
   return (
@@ -44,7 +55,9 @@ export default function HomePage() {
         ))}
       </section>
 
-      {isModalOpen && <AddSetModal onClose={() => setModalOpen(false)} />}
+      {isModalOpen && (
+        <AddSetModal onClose={() => setModalOpen(false)} onAdd={handleAdd} />
+      )}
     </main>
   );
 }

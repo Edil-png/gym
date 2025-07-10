@@ -13,7 +13,7 @@ export default function SetCard({ data, onRemove }: any) {
 
         <p className="text-xs text-gray-500">Дата создание: {data.time}</p>
       </div>
-      <button onClick={() => router.push(`/gym/${data.id}`)}>Начать</button>
+      <button onClick={() => router.push(`/gym/${data.id}`)} className="bg-blue-400 text-black p-[5px] rounded-[10px] active:bg-blue-300" >Начать</button>
 
       <button
         onClick={onRemove}

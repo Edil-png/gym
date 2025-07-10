@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface Set {
   id: number;
@@ -11,10 +11,9 @@ interface SetsState {
   sets: Set[];
 }
 
-// 📌 Загрузка из localStorage
 const loadFromLocalStorage = (): Set[] => {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('sets');
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("sets");
     return stored ? JSON.parse(stored) : [];
   }
   return [];
@@ -25,16 +24,19 @@ const initialState: SetsState = {
 };
 
 const setsSlice = createSlice({
-  name: 'sets',
+  name: "sets",
   initialState,
   reducers: {
     addSet: (state, action: PayloadAction<Set>) => {
       state.sets.unshift(action.payload);
-      localStorage.setItem('sets', JSON.stringify(state.sets)); // ✅ сохраняем
+      localStorage.setItem("sets", JSON.stringify(state.sets));
     },
     removeSet: (state, action: PayloadAction<number>) => {
-      state.sets = state.sets.filter(set => set.id !== action.payload);
-      localStorage.setItem('sets', JSON.stringify(state.sets)); // ✅ сохраняем
+      state.sets = state.sets.filter((set) => set.id !== action.payload);
+      localStorage.setItem("sets", JSON.stringify(state.sets));
+    },
+    readWeek: (state, action: PayloadAction<Set>) => {
+      state.sets = action.payload.week
     },
   },
 });
