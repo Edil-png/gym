@@ -4,7 +4,7 @@ import { Timer } from "@/components/Timer";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const data = {
+const data: Record<string, number[]> = {
   Отжимание: [20, 20, 15, 15, 10],
   "Подьем на турнике": [6, 5, 5, 4, 3],
   Приседание: [8, 10, 8, 8, 6],
@@ -20,7 +20,14 @@ interface Set {
 function Page() {
   const router = useRouter();
   const params = useParams();
-  const { id } = params;
+
+  // Убедимся, что id — строка
+  const id =
+    typeof params.id === "string"
+      ? params.id
+      : Array.isArray(params.id)
+      ? params.id[0]
+      : "";
 
   const [start, setStart] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -29,26 +36,33 @@ function Page() {
 
   // Загружаем данные из localStorage
   useEffect(() => {
-    const storedSets = localStorage.getItem("sets");
-    if (storedSets) {
-      const sets: Set[] = JSON.parse(storedSets);
-      const found = sets.find((set) => String(set.id) === id);
-      if (found) {
-        setCurrentSet(found);
-        const storedWeek = localStorage.getItem(`week-${id}`);
-        setWeek(storedWeek ? Number(storedWeek) : found.week);
+    if (!id) return;
+
+    try {
+      const storedSets = localStorage.getItem("sets");
+      if (storedSets) {
+        const sets: Set[] = JSON.parse(storedSets);
+        const found = sets.find((set) => String(set.id) === id);
+        if (found) {
+          setCurrentSet(found);
+
+          const storedWeek = localStorage.getItem(`week-${id}`);
+          setWeek(storedWeek ? Number(storedWeek) : found.week);
+        }
       }
+    } catch (err) {
+      console.error("Ошибка чтения из localStorage:", err);
     }
   }, [id]);
 
-  // Сохраняем неделю в localStorage при изменении
+  // Сохраняем неделю при изменении
   useEffect(() => {
     if (id) {
       localStorage.setItem(`week-${id}`, String(week));
     }
   }, [week, id]);
 
-  const getAdjustedReps = (exercise: string, week: number) => {
+  const getAdjustedReps = (exercise: string, week: number): number[] => {
     const baseReps = data[exercise] || [];
     const increase = (week - 1) * 2;
     return baseReps.map((rep) => rep + increase);
@@ -63,9 +77,9 @@ function Page() {
 
   const handleRestClick = () => {
     if (!start) {
-      setStart(true); // начинаем отдых
+      setStart(true);
     } else {
-      setStart(false); // завершаем отдых и переходим к следующему подходу
+      setStart(false);
       if (currentIndex < adjustedReps.length - 1) {
         setCurrentIndex((prev) => prev + 1);
       }
