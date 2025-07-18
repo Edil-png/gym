@@ -122,6 +122,12 @@ function Page() {
     }
   }, [currentIndex, adjustedReps, week]);
 
+  const onGetTimer = (time: number) => {
+    if (time <= 0) {
+      setStart(false);
+    }
+  };
+
   return (
     <main className="max-w-md mx-auto p-6 min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-800 text-white shadow-xl">
       <button
@@ -150,14 +156,14 @@ function Page() {
         </div>
         <div className="flex flex-col gap-2">
           <button
-            onClick={() => updateWeek(Math.min(week + 1, 30))}
+            onClick={() => updateWeek(Math.min(+week + 1, 30))}
             className="bg-blue-400 hover:bg-blue-300 transition text-black font-semibold rounded-xl px-4 py-2 disabled:opacity-40"
             disabled={week >= 30}
           >
             След. неделя
           </button>
           <button
-            onClick={() => updateWeek(Math.max(week - 1, 1))}
+            onClick={() => updateWeek(Math.max(+week - 1, 1))}
             className="bg-blue-200 hover:bg-blue-100 transition text-black font-semibold rounded-xl px-4 py-2 disabled:opacity-40"
             disabled={week <= 1}
           >
@@ -199,8 +205,14 @@ function Page() {
         </div>
       )}
 
-      <div className="bg-gray-800 rounded-2xl p-4 mb-6 shadow-md">
-        <Timer isRunning={start} />
+      <div className="bg-gray-800 rounded-2xl p-4 mb-6 shadow-md flex flex-col text-center">
+        {!start ? (
+          <p className="text-black rounded-2xl bg-green-500 m-auto p-[8px_16px] text-4xl font-bold">
+            {adjustedReps[currentIndex]}
+          </p>
+        ) : (
+          <Timer onGet={onGetTimer} isRunning={start} />
+        )}
       </div>
 
       {adjustedReps.length > 0 && (

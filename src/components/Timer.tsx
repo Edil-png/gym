@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 
 interface TimerProps {
+  onGet: (time: number) => void;
   isRunning: boolean;
   duration?: number; // в секундах
 }
 
-export function Timer({ isRunning, duration = 180 }: TimerProps) {
+export function Timer({ isRunning, onGet, duration = 120 }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(duration);
 
+  // Запуск таймера
   useEffect(() => {
     if (!isRunning) return;
 
@@ -26,7 +28,12 @@ export function Timer({ isRunning, duration = 180 }: TimerProps) {
     return () => clearInterval(interval);
   }, [isRunning]);
 
-  // Сброс таймера, если перезапускаем
+  // 🔧 Передача оставшегося времени наружу (только когда оно меняется)
+  useEffect(() => {
+    onGet(timeLeft);
+  }, [timeLeft]);
+
+  // Сброс таймера при остановке
   useEffect(() => {
     if (!isRunning) {
       setTimeLeft(duration);
@@ -42,8 +49,13 @@ export function Timer({ isRunning, duration = 180 }: TimerProps) {
   };
 
   return (
-    <div className="text-3xl font-mono text-center my-4">
-      {format(timeLeft)}
+    <div className="my-6 text-center">
+      <div className="inline-block px-6 py-4 bg-gray-800 text-green-500 text-5xl font-bold rounded-xl shadow-lg border border-gray-600 animate-pulse">
+        {format(timeLeft)}
+      </div>
+      <p className="text-sm text-gray-400 mt-2">
+        {isRunning ? "Таймер запущен" : "Таймер остановлен"}
+      </p>
     </div>
   );
 }
