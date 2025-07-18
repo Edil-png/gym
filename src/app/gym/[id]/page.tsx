@@ -1,14 +1,11 @@
 "use client";
 
+import { dataGym } from "@/app/constants/data";
+import { setWeek, setIndex } from "@/app/store/setsSlice";
 import { Timer } from "@/components/Timer";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-const data: Record<string, number[]> = {
-  Отжимание: [20, 20, 15, 15, 10],
-  "Подьем на турнике": [6, 5, 5, 4, 3],
-  Приседание: [8, 10, 8, 8, 6],
-};
+import { useAppDispatch } from "@/app/store/hooks";
 
 interface Set {
   id: number;
@@ -17,11 +14,13 @@ interface Set {
   time: string;
 }
 
+const data = dataGym;
+
 function Page() {
   const router = useRouter();
   const params = useParams();
+  const dispatch = useAppDispatch();
 
-  // Убедимся, что id — строка
   const id =
     typeof params.id === "string"
       ? params.id
@@ -31,10 +30,9 @@ function Page() {
 
   const [start, setStart] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [week, setWeek] = useState<number>(1);
+  const [week, setWeekState] = useState<number>(1);
   const [currentSet, setCurrentSet] = useState<Set | null>(null);
 
-  // Загружаем данные из localStorage
   useEffect(() => {
     if (!id) return;
 
@@ -45,35 +43,64 @@ function Page() {
         const found = sets.find((set) => String(set.id) === id);
         if (found) {
           setCurrentSet(found);
-
           const storedWeek = localStorage.getItem(`week-${id}`);
-          setWeek(storedWeek ? Number(storedWeek) : found.week);
+          const savedIndex = localStorage.getItem(`progress-${id}`);
+          const parsedWeek = storedWeek ? Number(storedWeek) : found.week;
+          const parsedIndex = savedIndex ? Number(savedIndex) : 0;
+
+          setWeekState(parsedWeek);
+          setCurrentIndex(parsedIndex);
+
+          // ✅ сразу в redux
+          dispatch(setWeek({ id, week: parsedWeek }));
+          dispatch(setIndex({ id, index: parsedIndex }));
         }
       }
     } catch (err) {
       console.error("Ошибка чтения из localStorage:", err);
     }
-  }, [id]);
+  }, [id, dispatch]);
 
-  // Сохраняем неделю при изменении
-  useEffect(() => {
-    if (id) {
-      localStorage.setItem(`week-${id}`, String(week));
-    }
-  }, [week, id]);
-
-  const getAdjustedReps = (exercise: string, week: number): number[] => {
-    const baseReps = data[exercise] || [];
-    const increase = (week - 1) * 2;
-    return baseReps.map((rep) => rep + increase);
+  const updateWeek = (newWeek: number) => {
+    setWeekState(newWeek);
+    dispatch(setWeek({ id, week: newWeek }));
+    localStorage.setItem(`week-${id}`, String(newWeek));
+    setCurrentIndex(0); // сбрасываем прогресс
+    dispatch(setIndex({ id, index: 0 }));
+    localStorage.setItem(`progress-${id}`, "0");
+    setStart(false);
   };
 
-  const adjustedReps =
-    currentSet?.exercise && week
-      ? getAdjustedReps(currentSet.exercise, week)
-      : [];
+  const updateIndex = (newIndex: number) => {
+    setCurrentIndex(newIndex);
+    dispatch(setIndex({ id, index: newIndex }));
+    localStorage.setItem(`progress-${id}`, String(newIndex));
+  };
 
-  const finishGym = adjustedReps.map((el) => el * 30);
+  const getAdjustedReps = (exercise: string, week: number): number[] => {
+    const base = data[exercise];
+    if (!base) return [];
+    if (Array.isArray(base)) return base;
+    return base[week] || [];
+  };
+
+  const getLastWeekReps = (exercise: string): number[] => {
+    const base = data[exercise];
+    if (!base) return [];
+    if (Array.isArray(base)) return base;
+    const weeks = Object.keys(base)
+      .map(Number)
+      .sort((a, b) => b - a);
+    return base[weeks[0]] || [];
+  };
+
+  const adjustedReps = currentSet?.exercise
+    ? getAdjustedReps(currentSet.exercise, week)
+    : [];
+
+  const lastWeekReps = currentSet?.exercise
+    ? getLastWeekReps(currentSet.exercise)
+    : [];
 
   const handleRestClick = () => {
     if (!start) {
@@ -81,103 +108,134 @@ function Page() {
     } else {
       setStart(false);
       if (currentIndex < adjustedReps.length - 1) {
-        setCurrentIndex((prev) => prev + 1);
+        updateIndex(currentIndex + 1);
       }
     }
   };
 
+  useEffect(() => {
+    if (currentIndex >= adjustedReps.length && adjustedReps.length > 0) {
+      setStart(false);
+      setTimeout(() => {
+        updateWeek(Math.min(week + 1, 30));
+      }, 2000);
+    }
+  }, [currentIndex, adjustedReps, week]);
+
   return (
-    <main className="max-w-md mx-auto p-4 text-white bg-gray-900 min-h-screen">
+    <main className="max-w-md mx-auto p-6 min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-800 text-white shadow-xl">
       <button
         onClick={() => router.push("/")}
-        className="text-4xl m-auto font-bold text-green-500 mb-4"
+        className="text-3xl font-extrabold text-green-400 hover:text-green-300 transition mb-4"
       >
-        Домой
+        ← Домой
       </button>
 
-      <h1 className="text-2xl font-bold mb-1">
+      <h1 className="text-4xl font-bold mb-2 animate-fade-in">
         {currentSet?.exercise || "Упражнение не найдено"}
       </h1>
 
-      <p className="text-sm text-gray-400 mb-4">
+      <p className="text-sm text-gray-400 mb-6">
         {new Date().toLocaleDateString("ru-RU")}
       </p>
 
-      <section className="mb-4 flex flex-row justify-between">
-        <div className="flex flex-col gap-[20px]">
-          <h2 className="text-lg font-semibold mb-1">Текущая неделя: {week}</h2>
-          <h2 className="text-lg font-semibold">Общая неделя: 30</h2>
+      <section className="flex justify-between items-start mb-6 bg-gray-800 p-4 rounded-2xl shadow-lg">
+        <div>
+          <h2 className="text-xl font-semibold text-yellow-300">
+            Текущая неделя: {week}
+          </h2>
+          <h2 className="text-md font-medium text-gray-400 mt-2">
+            Всего: 30 недель
+          </h2>
         </div>
-        <div className="flex flex-col gap-[10px] p-[8px]">
+        <div className="flex flex-col gap-2">
           <button
-            onClick={() => setWeek((prev) => Math.min(prev + 1, 30))}
-            className="rounded-3xl p-[10px] bg-blue-300 text-black"
+            onClick={() => updateWeek(Math.min(week + 1, 30))}
+            className="bg-blue-400 hover:bg-blue-300 transition text-black font-semibold rounded-xl px-4 py-2 disabled:opacity-40"
+            disabled={week >= 30}
           >
-            След... неделя
+            След. неделя
           </button>
           <button
-            onClick={() => setWeek((prev) => Math.max(prev - 1, 1))}
-            className="rounded-3xl p-[10px] bg-blue-200 text-black"
+            onClick={() => updateWeek(Math.max(week - 1, 1))}
+            className="bg-blue-200 hover:bg-blue-100 transition text-black font-semibold rounded-xl px-4 py-2 disabled:opacity-40"
+            disabled={week <= 1}
           >
-            Пред... неделя
+            Пред. неделя
           </button>
         </div>
       </section>
 
+      <p className="text-center text-xl mb-4 font-medium text-gray-300">
+        Подход: <span className="text-white">{currentIndex + 1}</span> /{" "}
+        {adjustedReps.length}
+      </p>
+
       {currentIndex === adjustedReps.length - 1 ? (
         <button
           onClick={() => router.push("/")}
-          className="bg-green-400 p-[25px_20px] rounded-3xl m-auto"
+          className="w-full bg-green-500 hover:bg-green-400 transition text-black font-bold py-4 rounded-2xl mb-6"
         >
-          Завершить тренировку
+          ✅ Завершить тренировку
         </button>
       ) : (
-        <div className="flex flex-col items-center gap-3 py-4">
+        <div className="flex flex-col items-center gap-3 mb-6">
           <button
             onClick={handleRestClick}
             className={`${
-              start ? "bg-orange-400" : "bg-green-400"
-            } rounded-2xl p-[15px] w-[160px]`}
+              start
+                ? "bg-orange-500 hover:bg-orange-400"
+                : "bg-green-500 hover:bg-green-400"
+            } transition text-black font-semibold rounded-xl px-6 py-3 w-full`}
           >
             {start ? "Завершить отдых" : "Начать отдых"}
           </button>
-
           <button
             onClick={() => router.push("/")}
-            className="bg-red-400 rounded-2xl p-[15px] w-[160px]"
+            className="bg-red-500 hover:bg-red-400 transition text-black font-semibold rounded-xl px-6 py-3 w-full"
           >
-            Отменить тренировку
+            ❌ Отменить тренировку
           </button>
         </div>
       )}
 
-      <Timer isRunning={start} />
+      <div className="bg-gray-800 rounded-2xl p-4 mb-6 shadow-md">
+        <Timer isRunning={start} />
+      </div>
 
       {adjustedReps.length > 0 && (
-        <div className="flex-row gap-[30px] flex bg-blue-950 rounded-3xl p-5 mt-4">
-          <div>
+        <div className="flex flex-col sm:flex-row gap-6 bg-gray-900 rounded-3xl p-5 shadow-lg">
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold mb-3 text-blue-300">
+              Текущая неделя
+            </h2>
             {adjustedReps.map((count, index) => (
-              <div key={index} className="flex gap-4 mb-2 items-center">
-                <div>Подход {index + 1}</div>
-                <div
-                  className={`px-3 py-1 rounded ${
+              <div key={index} className="flex gap-4 items-center mb-2">
+                <span className="w-20">Подход {index + 1}</span>
+                <span
+                  className={`px-4 py-1 rounded-full font-bold ${
                     index === currentIndex
-                      ? "bg-yellow-400 text-black font-bold"
-                      : "bg-red-400"
+                      ? "bg-yellow-400 text-black"
+                      : index < currentIndex
+                      ? "bg-green-500 text-black"
+                      : "bg-red-500"
                   }`}
                 >
                   {count}
-                </div>
+                </span>
               </div>
             ))}
           </div>
-          <div>
-            {finishGym.map((count, index) => (
-              <div key={index} className="flex gap-4 mb-2 items-center">
-                <div>Подход {index + 1}</div>
-                <div className="px-3 py-1 rounded font-bold bg-red-400">
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold mb-3 text-gray-300">
+              Последняя неделя
+            </h2>
+            {lastWeekReps.map((count, index) => (
+              <div key={index} className="flex gap-4 items-center mb-2">
+                <span className="w-20">Подход {index + 1}</span>
+                <span className="px-4 py-1 rounded-full font-bold bg-gray-600">
                   {count}
-                </div>
+                </span>
               </div>
             ))}
           </div>
@@ -185,8 +243,8 @@ function Page() {
       )}
 
       {currentIndex >= adjustedReps.length && (
-        <p className="text-center mt-4 text-green-400 font-bold text-xl">
-          Все подходы выполнены!
+        <p className="text-center mt-6 text-green-400 text-xl font-bold">
+          🎉 Все подходы выполнены!
         </p>
       )}
     </main>

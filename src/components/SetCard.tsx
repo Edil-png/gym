@@ -1,26 +1,43 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Trash2 } from "lucide-react"; // иконка удаления
 
 export default function SetCard({ data, onRemove }: any) {
+  const [week, setWeek] = useState<string | null>("");
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`week-${data.id}`);
+    setWeek(saved || data.week);
+  }, []);
+
   const router = useRouter();
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg mb-3 flex justify-between items-start">
-      <div>
-        <p className="font-semibold">{data.exercise}</p>
-        <p className="text-sm text-gray-300">Текущий неделя: {data.week}</p>
-        <p className="text-sm text-gray-300">Общая неделя: 30</p>
-
-        <p className="text-xs text-gray-500">Дата создание: {data.time}</p>
+    <div className="bg-gradient-to-br from-gray-800 to-gray-700 shadow-md p-4 rounded-2xl mb-4 flex justify-between items-start gap-3 hover:shadow-lg transition-all">
+      <div className="flex-1 text-white">
+        <p className="text-lg font-bold">{data.exercise}</p>
+        <p className="text-sm text-gray-300">Текущая неделя: <span className="font-medium text-white">{week}</span></p>
+        <p className="text-sm text-gray-400">Общая неделя: 30</p>
+        <p className="text-xs text-gray-500 mt-1">Создано: {data.time}</p>
       </div>
-      <button onClick={() => router.push(`/gym/${data.id}`)} className="bg-blue-400 text-black p-[5px] rounded-[10px] active:bg-blue-300" >Начать</button>
 
-      <button
-        onClick={onRemove}
-        className="text-red-400 hover:text-red-600 text-xl font-bold"
-      >
-        х
-      </button>
+      <div className="flex flex-col items-end gap-2">
+        <button
+          onClick={() => router.push(`/gym/${data.id}`)}
+          className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold px-4 py-1 rounded-lg transition"
+        >
+          Начать
+        </button>
+
+        <button
+          onClick={onRemove}
+          title="Удалить подход"
+          className="text-red-400 hover:text-red-600 transition"
+        >
+          <Trash2 size={20} />
+        </button>
+      </div>
     </div>
   );
 }

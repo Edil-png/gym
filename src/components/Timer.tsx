@@ -7,7 +7,7 @@ interface TimerProps {
   duration?: number; // в секундах
 }
 
-export function Timer({ isRunning, duration = 120 }: TimerProps) {
+export function Timer({ isRunning, duration = 180 }: TimerProps) {
   const [timeLeft, setTimeLeft] = useState(duration);
 
   useEffect(() => {
