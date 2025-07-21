@@ -62,6 +62,7 @@ function Page() {
   }, [id, dispatch]);
 
   const updateWeek = (newWeek: number) => {
+    console.log(newWeek)
     setWeekState(newWeek);
     dispatch(setWeek({ id, week: newWeek }));
     localStorage.setItem(`week-${id}`, String(newWeek));
@@ -94,7 +95,7 @@ function Page() {
       .map(Number)
       .sort((a, b) => b - a);
 
-    setLastWeek(weeks.length);
+    setLastWeek(weeks[0]);
   }, [currentSet]);
 
   const getLastWeekReps = (exercise: string): number[] => {
@@ -165,14 +166,14 @@ function Page() {
           </div>
           <div className="flex flex-col gap-2">
             <button
-              onClick={() => lastWeek && updateWeek(Math.min(week + 1, lastWeek))}
+              onClick={() => lastWeek && updateWeek(Math.min(+week + 1, lastWeek))}
               className="bg-blue-400 hover:bg-blue-300 transition text-black font-semibold rounded-xl px-4 py-2 disabled:opacity-40"
               disabled={lastWeek ? week >= lastWeek : true}
             >
               След.
             </button>
             <button
-              onClick={() => updateWeek(Math.max(week - 1, 1))}
+              onClick={() => updateWeek(Math.max(+week - 1, 1))}
               className="bg-blue-200 hover:bg-blue-100 transition text-black font-semibold rounded-xl px-4 py-2 disabled:opacity-40"
               disabled={week <= 1}
             >
