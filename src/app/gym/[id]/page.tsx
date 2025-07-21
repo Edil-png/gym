@@ -27,6 +27,7 @@ function Page() {
       : Array.isArray(params.id)
       ? params.id[0]
       : "";
+
   const [start, setStart] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [week, setWeekState] = useState<number>(1);
@@ -51,7 +52,6 @@ function Page() {
           setWeekState(parsedWeek);
           setCurrentIndex(parsedIndex);
 
-          // ✅ сразу в redux
           dispatch(setWeek({ id, week: parsedWeek }));
           dispatch(setIndex({ id, index: parsedIndex }));
         }
@@ -65,7 +65,7 @@ function Page() {
     setWeekState(newWeek);
     dispatch(setWeek({ id, week: newWeek }));
     localStorage.setItem(`week-${id}`, String(newWeek));
-    setCurrentIndex(0); // сбрасываем прогресс
+    setCurrentIndex(0);
     dispatch(setIndex({ id, index: 0 }));
     localStorage.setItem(`progress-${id}`, "0");
     setStart(false);
@@ -143,57 +143,47 @@ function Page() {
     }
   };
 
-  return (  
-    <main className="max-w-md mx-auto p-6 min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-800 text-white shadow-xl">
+  return (
+    <main className="max-w-md mx-auto px-4 py-6 min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white font-sans relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-48 bg-gradient-to-r from-green-400/20 to-blue-400/10 blur-2xl opacity-50 pointer-events-none" />
+
       <button
         onClick={() => router.push("/")}
-        className="text-3xl font-extrabold text-green-400 hover:text-green-300 transition mb-4"
+        className="text-2xl font-bold text-green-400 hover:text-green-300 transition mb-6"
       >
-        ← Домой
+        ← Назад
       </button>
 
-      <h1 className="text-4xl font-bold mb-2 animate-fade-in">
-        {currentSet?.exercise || "Упражнение не найдено"}
-      </h1>
+      <h1 className="text-4xl font-extrabold mb-1">{currentSet?.exercise}</h1>
+      <p className="text-sm text-gray-400 mb-4">{new Date().toLocaleDateString("ru-RU")}</p>
 
-      <p className="text-sm text-gray-400 mb-6">
-        {new Date().toLocaleDateString("ru-RU")}
-      </p>
-
-      <section className="flex justify-between items-start mb-6 bg-gray-800 p-4 rounded-2xl shadow-lg">
-        <div>
-          <h2 className="text-xl font-semibold text-yellow-300">
-            Текущая неделя: {week}
-          </h2>
-          <h2 className="text-md font-medium text-gray-400 mt-2">
-            {`Всего: ${lastWeek} недель`}
-          </h2>
-        </div>
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={() => {
-              if (lastWeek != null) {
-                updateWeek(Math.min(+week + 1, lastWeek));
-              }
-            }}
-            className="bg-blue-400 hover:bg-blue-300 transition text-black font-semibold rounded-xl px-4 py-2 disabled:opacity-40"
-            disabled={lastWeek != null ? week >= lastWeek : true}
-          >
-            След. неделя
-          </button>
-          <button
-            onClick={() => updateWeek(Math.max(+week - 1, 1))}
-            className="bg-blue-200 hover:bg-blue-100 transition text-black font-semibold rounded-xl px-4 py-2 disabled:opacity-40"
-            disabled={week <= 1}
-          >
-            Пред. неделя
-          </button>
+      <section className="bg-gray-800 p-4 rounded-2xl shadow-lg mb-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-xl font-semibold text-yellow-300">Неделя: {week}</h2>
+            <p className="text-sm text-gray-400 mt-2">Всего недель: {lastWeek}</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => lastWeek && updateWeek(Math.min(week + 1, lastWeek))}
+              className="bg-blue-400 hover:bg-blue-300 transition text-black font-semibold rounded-xl px-4 py-2 disabled:opacity-40"
+              disabled={lastWeek ? week >= lastWeek : true}
+            >
+              След.
+            </button>
+            <button
+              onClick={() => updateWeek(Math.max(week - 1, 1))}
+              className="bg-blue-200 hover:bg-blue-100 transition text-black font-semibold rounded-xl px-4 py-2 disabled:opacity-40"
+              disabled={week <= 1}
+            >
+              Пред.
+            </button>
+          </div>
         </div>
       </section>
 
-      <p className="text-center text-xl mb-4 font-medium text-gray-300">
-        Подход: <span className="text-white">{currentIndex + 1}</span> /{" "}
-        {adjustedReps.length}
+      <p className="text-xl text-center mb-4">
+        Подход <span className="text-white font-bold">{currentIndex + 1}</span> / {adjustedReps.length}
       </p>
 
       {currentIndex === adjustedReps.length - 1 ? (
@@ -204,30 +194,28 @@ function Page() {
           ✅ Завершить тренировку
         </button>
       ) : (
-        <div className="flex flex-col items-center gap-3 mb-6">
+        <div className="flex flex-col gap-4 mb-6">
           <button
             onClick={handleRestClick}
-            className={`${
-              start
-                ? "bg-orange-500 hover:bg-orange-400"
-                : "bg-green-500 hover:bg-green-400"
-            } transition text-black font-semibold rounded-xl px-6 py-3 w-full`}
+            className={`w-full text-black font-semibold py-3 rounded-xl transition ${
+              start ? "bg-orange-500 hover:bg-orange-400" : "bg-green-500 hover:bg-green-400"
+            }`}
           >
             {start ? "Завершить отдых" : "Начать отдых"}
           </button>
           <button
             onClick={() => router.push("/")}
-            className="bg-red-500 hover:bg-red-400 transition text-black font-semibold rounded-xl px-6 py-3 w-full"
+            className="w-full bg-red-500 hover:bg-red-400 text-black font-semibold py-3 rounded-xl"
           >
             ❌ Отменить тренировку
           </button>
         </div>
       )}
 
-      <div className="bg-gray-800 rounded-2xl p-4 mb-6 shadow-md flex flex-col text-center">
+      <div className="bg-gray-800 rounded-2xl p-4 mb-6 shadow-inner text-center">
         {!start ? (
-          <p className="text-black rounded-2xl bg-green-500 m-auto p-[8px_16px] text-4xl font-bold">
-            {adjustedReps[currentIndex]}
+          <p className="text-4xl font-bold bg-green-500 text-black inline-block px-6 py-2 rounded-2xl animate-pulse">
+            Нужно сделать: {adjustedReps[currentIndex]}
           </p>
         ) : (
           <Timer onGet={onGetTimer} isRunning={start} />
@@ -235,14 +223,12 @@ function Page() {
       </div>
 
       {adjustedReps.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-6 bg-gray-900 rounded-3xl p-5 shadow-lg">
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold mb-3 text-blue-300">
-              Текущая неделя
-            </h2>
+        <div className="grid sm:grid-cols-2 gap-6 bg-gray-900 rounded-3xl p-5 shadow-lg">
+          <div>
+            <h2 className="text-lg font-semibold mb-3 text-blue-300">Текущая неделя</h2>
             {adjustedReps.map((count, index) => (
-              <div key={index} className="flex gap-4 items-center mb-2">
-                <span className="w-20">Подход {index + 1}</span>
+              <div key={index} className="flex justify-between items-center mb-2">
+                <span>Подход {index + 1}</span>
                 <span
                   className={`px-4 py-1 rounded-full font-bold ${
                     index === currentIndex
@@ -257,16 +243,12 @@ function Page() {
               </div>
             ))}
           </div>
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold mb-3 text-gray-300">
-              Последняя неделя
-            </h2>
+          <div>
+            <h2 className="text-lg font-semibold mb-3 text-gray-300">Последняя неделя</h2>
             {lastWeekReps.map((count, index) => (
-              <div key={index} className="flex gap-4 items-center mb-2">
-                <span className="w-20">Подход {index + 1}</span>
-                <span className="px-4 py-1 rounded-full font-bold bg-gray-600">
-                  {count}
-                </span>
+              <div key={index} className="flex justify-between items-center mb-2">
+                <span>Подход {index + 1}</span>
+                <span className="px-4 py-1 rounded-full font-bold bg-gray-600">{count}</span>
               </div>
             ))}
           </div>
@@ -274,7 +256,7 @@ function Page() {
       )}
 
       {currentIndex >= adjustedReps.length && (
-        <p className="text-center mt-6 text-green-400 text-xl font-bold">
+        <p className="text-center mt-6 text-green-400 text-xl font-bold animate-bounce">
           🎉 Все подходы выполнены!
         </p>
       )}
