@@ -5,6 +5,7 @@ import AddSetModal from "../components/AddSetModal";
 import SetCard from "../components/SetCard";
 
 export default function HomePage() {
+  
   const [isInitialized, setIsInitialized] = useState(false);
   const [sets, setSets] = useState<any[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);

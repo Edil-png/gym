@@ -7,7 +7,12 @@ export default function AddSetModal({
   onClose: () => void;
   onAdd: (newSet: any) => void;
 }) {
-  const select = ["Отжимание", "Подъем на турнике", "Приседание"];
+  const select = [
+    "Отжимание",
+    "Подъем на турнике",
+    "Приседание",
+    "Отжиманий на брусьях",
+  ];
 
   const handleSubmit = (exercise: string) => {
     if (!exercise.trim()) return;

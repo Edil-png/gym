@@ -2,8 +2,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react"; // иконка удаления
+import { dataGym } from "@/app/constants/data";
 
 export default function SetCard({ data, onRemove }: any) {
+  const dataWeek = dataGym;
   const [week, setWeek] = useState<string | null>("");
 
   useEffect(() => {
@@ -12,13 +14,24 @@ export default function SetCard({ data, onRemove }: any) {
   }, []);
 
   const router = useRouter();
+const getWeeksCount = (exercise: string): number => {
+  const base = dataWeek[exercise];
+  if (!base || Array.isArray(base)) return 1;
+  return Object.keys(base).length;
+};
+
+
+
+  const lastWeekReps = data?.exercise ? getWeeksCount(data.exercise) : [];
 
   return (
     <div className="bg-gradient-to-br from-gray-800 to-gray-700 shadow-md p-4 rounded-2xl mb-4 flex justify-between items-start gap-3 hover:shadow-lg transition-all">
       <div className="flex-1 text-white">
         <p className="text-lg font-bold">{data.exercise}</p>
-        <p className="text-sm text-gray-300">Текущая неделя: <span className="font-medium text-white">{week}</span></p>
-        <p className="text-sm text-gray-400">Общая неделя: 30</p>
+        <p className="text-sm text-gray-300">
+          Текущая неделя: <span className="font-medium text-white">{week}</span>
+        </p>
+        <p className="text-sm text-gray-400">Общая неделя: {lastWeekReps}</p>
         <p className="text-xs text-gray-500 mt-1">Создано: {data.time}</p>
       </div>
 

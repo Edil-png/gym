@@ -27,11 +27,11 @@ function Page() {
       : Array.isArray(params.id)
       ? params.id[0]
       : "";
-
   const [start, setStart] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [week, setWeekState] = useState<number>(1);
   const [currentSet, setCurrentSet] = useState<Set | null>(null);
+  const [lastWeek, setLastWeek] = useState<number>();
 
   useEffect(() => {
     if (!id) return;
@@ -84,13 +84,28 @@ function Page() {
     return base[week] || [];
   };
 
+  useEffect(() => {
+    if (!currentSet?.exercise) return;
+
+    const base = data[currentSet.exercise];
+    if (!base || Array.isArray(base)) return;
+
+    const weeks = Object.keys(base)
+      .map(Number)
+      .sort((a, b) => b - a);
+
+    setLastWeek(weeks.length);
+  }, [currentSet]);
+
   const getLastWeekReps = (exercise: string): number[] => {
     const base = data[exercise];
     if (!base) return [];
     if (Array.isArray(base)) return base;
+
     const weeks = Object.keys(base)
       .map(Number)
       .sort((a, b) => b - a);
+
     return base[weeks[0]] || [];
   };
 
@@ -128,7 +143,7 @@ function Page() {
     }
   };
 
-  return (
+  return (  
     <main className="max-w-md mx-auto p-6 min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-800 text-white shadow-xl">
       <button
         onClick={() => router.push("/")}
@@ -151,14 +166,18 @@ function Page() {
             Текущая неделя: {week}
           </h2>
           <h2 className="text-md font-medium text-gray-400 mt-2">
-            Всего: 30 недель
+            {`Всего: ${lastWeek} недель`}
           </h2>
         </div>
         <div className="flex flex-col gap-2">
           <button
-            onClick={() => updateWeek(Math.min(+week + 1, 30))}
+            onClick={() => {
+              if (lastWeek != null) {
+                updateWeek(Math.min(+week + 1, lastWeek));
+              }
+            }}
             className="bg-blue-400 hover:bg-blue-300 transition text-black font-semibold rounded-xl px-4 py-2 disabled:opacity-40"
-            disabled={week >= 30}
+            disabled={lastWeek != null ? week >= lastWeek : true}
           >
             След. неделя
           </button>
